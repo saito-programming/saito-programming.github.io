@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>キーボードセンダー</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin-top: 50px; }
+        #display { font-size: 3em; color: #007bff; margin: 20px; min-height: 1.2em; }
+        #status { color: gray; margin-bottom: 20px; }
+        button { padding: 10px 20px; font-size: 1.2em; cursor: pointer; }
+        kbd { background: #eee; border-radius: 3px; padding: 2px 4px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+
+    <h1>Web Serial キーボード送信</h1>
+    <div id="status">接続されていません</div>
+    <button id="connectBtn">マイクロビットに接続する(baudRate：115200bps)</button>
+    
+    <div style="margin-top: 30px;">
+        <p>キーボードを叩いてください（1文字ずつ送信されます）</p>
+        <div id="display">?</div>
+    </div>
+
+    <script>
+        let port;
+        let writer;
+
+        const connectBtn = document.getElementById('connectBtn');
+        const statusDiv = document.getElementById('status');
+        const displayDiv = document.getElementById('display');
+
+        // 接続処理
+        connectBtn.addEventListener('click', async () => {
+            try {
+                // シリアルポートの選択とオープン
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 }); // micro:bitの標準ボーレートは115200
+
+                // 書き込み用ストリームの準備
+                const encoder = new TextEncoderStream();
+                const writableStreamClosed = encoder.readable.pipeTo(port.writable);
+                writer = encoder.writable.getWriter();
+
+                statusDiv.innerText = "接続完了！キーボード入力を待機中...";
+                connectBtn.style.display = "none";
+            } catch (error) {
+                console.error(error);
+                statusDiv.innerText = "接続に失敗しました";
+            }
+        });
+
+        // キーボード入力イベントの監視
+        document.addEventListener('keydown', async (event) => {
+            // 接続されていない、または特殊キー（EnterやShiftなど）の場合は無視
+            if (!writer || event.key.length !== 1) return;
+
+            const char = event.key;
+
+            // 1. ブラウザに表示
+            displayDiv.innerText = char;
+
+            // 2. micro:bitに送信
+            try {
+                await writer.write(char);
+                console.log("Sent:", char);
+            } catch (error) {
+                console.error("送信エラー:", error);
+            }
+        });
+    </script>
+</body>
+</html>
