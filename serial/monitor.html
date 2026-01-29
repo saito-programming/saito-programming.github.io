@@ -2,37 +2,20 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>micro:bit Serial Monitor</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; background-color: #f0f0f0; }
-        #connect { padding: 10px 20px; font-size: 1.2rem; cursor: pointer;  border-radius: 5px; border: none;background: #0078d7; color: white; }
-        
-        /* 出力エリアのスタイル */
-        #output {
-            margin: 20px auto;
-            width: 60%;
-            height: 200px;
-            background-color: #000; /* 背景：黒 */
-            color: #fff;            /* 文字：白 */
-            padding: 15px;
-            overflow-y: scroll;
-            text-align: left;
-            font-family: 'Courier New', Courier, monospace;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            line-height: 1.5;
-        }
-        .log-line { border-bottom: 1px solid #333; margin: 0; padding: 2px 0; }
-        .tag { color: #0f0; margin-right: 10px; } /* 受信ラベルを緑に */
-    </style>
+    <title>シリアル通信モニター - Saito Programming Hub</title>
+    <link rel="stylesheet" href="/css/monitor.css">
 </head>
 <body>
 
-    <h1>micro:bit シリアル通信モニター</h1>
+    <h1>マイクロビットシリアル通信モニター</h1>
     <button id="connect">マイクロビットに接続する(baudRate：115200bps)</button>
 
     <div id="output">
         <p style="color: #888;">ここに受信データが表示されます...</p>
+    </div>
+
+    <div>
+    	<a href="/">戻る</a>
     </div>
 
     <script>
