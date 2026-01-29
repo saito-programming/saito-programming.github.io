@@ -1,0 +1,23 @@
+body {
+	 font-family: 'Inter', -apple-system, system-ui, sans-serif;
+	      -webkit-font-smoothing: antialiased; text-align: center; background-color: #f0f0f0; 
+}
+#connect { padding: 10px 20px; font-size: 1.2rem; cursor: pointer;  border-radius: 5px; border: none;background: #0078d7; color: white; }
+
+/* 出力エリアのスタイル */
+#output {
+    margin: 20px auto;
+    width: 60%;
+    height: 200px;
+    background-color: #000; /* 背景：黒 */
+    color: #fff;            /* 文字：白 */
+    padding: 15px;
+    overflow-y: scroll;
+    text-align: left;
+    font-family: 'Courier New', Courier, monospace;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    line-height: 1.5;
+}
+.log-line { border-bottom: 1px solid #333; margin: 0; padding: 2px 0; }
+.tag { color: #0f0; margin-right: 10px; } /* 受信ラベルを緑に */
