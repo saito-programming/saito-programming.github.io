@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>micro:bit Serial Monitor</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background-color: #f0f0f0; }
+        #connect { padding: 10px 20px; font-size: 1.2rem; cursor: pointer;  border-radius: 5px; border: none;background: #0078d7; color: white; }
+        
+        /* 出力エリアのスタイル */
+        #output {
+            margin: 20px auto;
+            width: 60%;
+            height: 200px;
+            background-color: #000; /* 背景：黒 */
+            color: #fff;            /* 文字：白 */
+            padding: 15px;
+            overflow-y: scroll;
+            text-align: left;
+            font-family: 'Courier New', Courier, monospace;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            line-height: 1.5;
+        }
+        .log-line { border-bottom: 1px solid #333; margin: 0; padding: 2px 0; }
+        .tag { color: #0f0; margin-right: 10px; } /* 受信ラベルを緑に */
+    </style>
+</head>
+<body>
+
+    <h1>micro:bit シリアル通信モニター</h1>
+    <button id="connect">マイクロビットに接続する(baudRate：115200bps)</button>
+
+    <div id="output">
+        <p style="color: #888;">ここに受信データが表示されます...</p>
+    </div>
+
+    <script>
+        const connectBtn = document.getElementById('connect');
+        const outputDiv = document.getElementById('output');
+
+        connectBtn.addEventListener('click', async () => {
+            try {
+                // シリアルポートの要求
+                const port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+
+                connectBtn.textContent = "🔌 接続中...";
+                connectBtn.disabled = true;
+                outputDiv.innerHTML = ""; // 初期メッセージを消去
+
+                const decoder = new TextDecoderStream();
+                port.readable.pipeTo(decoder.writable);
+                const reader = decoder.readable.getReader();
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    if (value) {
+                        // micro:bitからの文字列を表示（改行コードなどのトリミング）
+                        const cleanText = value.trim();
+                        if (cleanText) {
+                            const p = document.createElement('p');
+                            p.className = 'log-line';
+                            p.innerHTML = `<span class="tag">[受信]</span>${cleanText}`;
+                            outputDiv.appendChild(p);
+                            
+                            // 常に最新の行が見えるようにスクロール
+                            outputDiv.scrollTop = outputDiv.scrollHeight;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error(error);
+                alert("接続に失敗しました。");
+            }
+        });
+    </script>
+</body>
+</html>
