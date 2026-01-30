@@ -78,7 +78,7 @@ function handleSerialInput(data) {
     for (let char in mapping) {
         if (data.includes(char)) {
             keys[mapping[char]] = true;
-            setTimeout(() => keys[mapping[char]] = false, 100);
+            setTimeout(() => keys[mapping[char]] = false, 10);
         }
     }
 }
