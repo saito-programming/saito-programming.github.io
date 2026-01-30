@@ -5,11 +5,12 @@
     <title>JSシューター - Saito Programming Hub</title>
     <style>
         body { 
-            /**background: #1a1a1a;**/ display: flex; flex-direction: column;
+            display: flex; flex-direction: column;
             justify-content: center; align-items: center; 
-            /**height: 100vh;**/ margin: 0; /**color: white;**/ font-family: sans-serif;
+            margin: 0; font-family: sans-serif;
+            /**background: #1a1a1a;**/ color: black;
         }
-        canvas { background: #000; border: 3px solid #000; }
+        canvas { background: #000; border: 3px solid #444; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         .ui { margin-top: 10px; text-align: center; }
         #connect-btn { 
             margin-top:10px;padding: 10px 20px; background: #00d2ff; border: none; 
@@ -23,115 +24,165 @@
     <button id="connect-btn">マイクロビットと接続 (シリアル通信)</button>
     <canvas id="gameCanvas" width="400" height="500"></canvas>
     <div class="ui">
-        [W,A,S,D]: Move | [K]: Shot | [R]: Restart<br>
+        [W,A,S,D]: 移動 | [K]: 発射 | [B]: ボム | [R]: 再スタート<br>
         <small id="status">シリアル通信: 未接続</small>
     </div>
 
     <div style="padding-bottom:20px;">
-    	<a href="/">戻る</a>
+        <a href="/">戻る</a>
     </div>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+// --- SVG素材の準備 ---
+const playerImg = new Image();
+playerImg.src = 'data:image/svg+xml;base64,' + btoa(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <path d="M10 75 L50 20 L90 75 L50 65 Z" fill="#00d2ff" stroke="#fff" stroke-width="2"/>
+    <path d="M40 85 L50 15 L60 85 Z" fill="#fff" />
+    <ellipse cx="50" cy="45" rx="6" ry="15" fill="#333" />
+    <path d="M35 85 L50 78 L65 85" fill="none" stroke="#00d2ff" stroke-width="4"/>
+</svg>`);
+
+const enemyImg = new Image();
+enemyImg.src = 'data:image/svg+xml;base64,' + btoa(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <path d="M30 10 L70 15 L90 40 L85 75 L50 95 L15 80 L5 45 Z" fill="#666" stroke="#444" stroke-width="2"/>
+    <circle cx="35" cy="35" r="8" fill="#555" />
+    <circle cx="65" cy="60" r="12" fill="#555" />
+</svg>`);
+
 // --- ゲーム変数の初期化 ---
-let player, bullets, enemies, keys, score, isGameOver, wasKPressed;
+let player, bullets, enemies, keys, score, isGameOver, wasKPressed, wasBPressed, bomb;
 
 function init() {
-    player = { x: 185, y: 440, size: 25, speed: 6 };
+    player = { x: 185, y: 440, size: 30, speed: 6 };
     bullets = [];
     enemies = [];
-    keys = {}; // ここにキーボードとシリアルの両方の状態を格納
+    keys = {};
     score = 0;
     isGameOver = false;
     wasKPressed = false;
+    wasBPressed = false;
+    bomb = { active: false, x: 0, y: 0, r: 0, maxR: 200 };
 }
 
-// --- キーボード入力監視 ---
+// --- 入力系 ---
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 
-// --- Web Serial API 実装 ---
-const connectBtn = document.getElementById('connect-btn');
-const statusText = document.getElementById('status');
+function handleSerialInput(data) {
+    const mapping = { 'w':'KeyW', 's':'KeyS', 'a':'KeyA', 'd':'KeyD', 'k':'KeyK', 'b':'KeyB', 'r':'KeyR' };
+    for (let char in mapping) {
+        if (data.includes(char)) {
+            keys[mapping[char]] = true;
+            setTimeout(() => keys[mapping[char]] = false, 100);
+        }
+    }
+}
 
+// --- シリアル通信接続 ---
+const connectBtn = document.getElementById('connect-btn');
 connectBtn.addEventListener('click', async () => {
     try {
         const port = await navigator.serial.requestPort();
         await port.open({ baudRate: 115200 });
-        statusText.innerText = "シリアル通信: 接続済み (115200bps)";
+        document.getElementById('status').innerText = "シリアル通信: 接続済み";
         connectBtn.style.display = "none";
-
         const reader = port.readable.getReader();
         while (true) {
             const { value, done } = await reader.read();
-			if (done) break;
-            
-            // マイコンから送られてきたデータを文字列に変換
-            const data = new TextDecoder().decode(value).trim().toLowerCase();
-			
-            // シリアル入力をキーボード入力用のkeysオブジェクトに反映
-            handleSerialInput(data);
+            if (done) break;
+            handleSerialInput(new TextDecoder().decode(value).trim().toLowerCase());
         }
-    } catch (error) {
-        console.error("Serial Error:", error);
-        statusText.innerText = "シリアル通信: 接続失敗";
-    }
+    } catch (e) { console.error(e); }
 });
 
-function handleSerialInput(data) {
-    // 全てのキーを一旦オフにする（シリアルが「押しっぱなし」を送信し続けない想定の場合）
-    // もしマイコン側で「押した時」と「離した時」を制御しているなら、ここはロジック調整が必要です。
-    // 今回は「受信した文字に対応する動作を一定時間実行する」簡易版です。
-console.log(data);
-    if (data.includes('w')) { keys['KeyW'] = true; setTimeout(() => keys['KeyW'] = false, 100); }
-    if (data.includes('s')) { keys['KeyS'] = true; setTimeout(() => keys['KeyS'] = false, 100); }
-    if (data.includes('a')) { keys['KeyA'] = true; setTimeout(() => keys['KeyA'] = false, 100); }
-    if (data.includes('d')) { keys['KeyD'] = true; setTimeout(() => keys['KeyD'] = false, 100); }
-    if (data.includes('k')) { keys['KeyK'] = true; setTimeout(() => keys['KeyK'] = false, 100); }
-    if (data.includes('r')) { keys['KeyR'] = true; setTimeout(() => keys['KeyR'] = false, 100); }
-}
-
-// --- メインループ (変更なし) ---
+// --- メインループ ---
 function update() {
     if (isGameOver) {
         if (keys['KeyR']) init();
         return;
     }
 
+    // 移動
     if (keys['KeyW'] && player.y > 0) player.y -= player.speed;
     if (keys['KeyS'] && player.y < canvas.height - player.size) player.y += player.speed;
     if (keys['KeyA'] && player.x > 0) player.x -= player.speed;
     if (keys['KeyD'] && player.x < canvas.width - player.size) player.x += player.speed;
 
+    // ショット
     if (keys['KeyK'] && !wasKPressed) {
         bullets.push({ x: player.x + player.size/2 - 2, y: player.y, speed: 10 });
     }
     wasKPressed = keys['KeyK'];
 
+    // ボム発動
+    if (keys['KeyB'] && !wasBPressed && !bomb.active) {
+        bomb.active = true;
+        bomb.x = player.x + player.size/2;
+        bomb.y = player.y + player.size/2;
+        bomb.r = 0;
+    }
+    wasBPressed = keys['KeyB'];
+
+    // 弾の更新
     for (let i = bullets.length - 1; i >= 0; i--) {
         bullets[i].y -= bullets[i].speed;
         if (bullets[i].y < -20) bullets.splice(i, 1);
     }
 
-    if (Math.random() < 0.03) {
-        enemies.push({ x: Math.random()*(canvas.width-30), y: -30, size: 30, speed: 3 });
+    // ボムの更新
+    if (bomb.active) {
+        bomb.r += 8;
+        if (bomb.r > bomb.maxR) bomb.active = false;
     }
 
+    // 敵の生成
+    if (Math.random() < 0.04) {
+        enemies.push({ 
+            x: Math.random()*(canvas.width-30), 
+            y: -30, 
+            size: 30 + Math.random()*20, 
+            speed: 2 + Math.random()*2,
+            angle: 0,
+            rot: (Math.random()-0.5)*0.1 
+        });
+    }
+
+    // 敵の更新と衝突判定
     for (let i = enemies.length - 1; i >= 0; i--) {
         let e = enemies[i];
         e.y += e.speed;
-        if (player.x < e.x + e.size && player.x + player.size > e.x &&
-            player.y < e.y + e.size && player.y + player.size > e.y) {
+        e.angle += e.rot;
+
+        // 自機との衝突
+        if (player.x < e.x + e.size*0.8 && player.x + player.size > e.x + e.size*0.2 &&
+            player.y < e.y + e.size*0.8 && player.y + player.size > e.y + e.size*0.2) {
             isGameOver = true;
         }
+
+        // 弾との衝突
         for (let j = bullets.length - 1; j >= 0; j--) {
             let b = bullets[j];
-            if (b.x < e.x + e.size && b.x + 5 > e.x && b.y < e.y + e.size && b.y + 10 > e.y) {
-                enemies.splice(i, 1); bullets.splice(j, 1); score += 100; break;
+            if (b.x < e.x + e.size && b.x + 4 > e.x && b.y < e.y + e.size && b.y + 10 > e.y) {
+                enemies.splice(i, 1); bullets.splice(j, 1); score += 100;
+                break;
             }
         }
+
+        // ボムとの衝突
+        if (bomb.active && enemies[i]) {
+            let dx = (e.x + e.size/2) - bomb.x;
+            let dy = (e.y + e.size/2) - bomb.y;
+            if (Math.sqrt(dx*dx + dy*dy) < bomb.r + e.size/2) {
+                enemies.splice(i, 1);
+                score += 50;
+            }
+        }
+
         if (e && e.y > canvas.height) enemies.splice(i, 1);
     }
 }
@@ -139,22 +190,42 @@ function update() {
 function draw() {
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // 弾
     ctx.fillStyle = '#ffff00';
     bullets.forEach(b => ctx.fillRect(b.x, b.y, 4, 10));
-    ctx.fillStyle = '#00d2ff';
-    ctx.fillRect(player.x, player.y, player.size, player.size);
-    ctx.fillStyle = '#ff4b2b';
-    enemies.forEach(e => ctx.fillRect(e.x, e.y, e.size, e.size));
-    ctx.fillStyle = '#fff'; ctx.font = '18px Arial'; ctx.textAlign = 'left';
+    
+    // プレイヤー（飛行機）
+    ctx.drawImage(playerImg, player.x, player.y, player.size, player.size);
+    
+    // 敵（隕石）
+    enemies.forEach(e => {
+        ctx.save();
+        ctx.translate(e.x + e.size/2, e.y + e.size/2);
+        ctx.rotate(e.angle);
+        ctx.drawImage(enemyImg, -e.size/2, -e.size/2, e.size, e.size);
+        ctx.restore();
+    });
+
+    // ボム演出
+    if (bomb.active) {
+        ctx.beginPath();
+        ctx.arc(bomb.x, bomb.y, bomb.r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(255, 255, 255, ${1 - bomb.r/bomb.maxR})`;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+    }
+
+    // UI
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 18px Arial'; ctx.textAlign = 'left';
     ctx.fillText(`SCORE: ${score}`, 15, 30);
 
     if (isGameOver) {
         ctx.fillStyle = 'rgba(0,0,0,0.8)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.font = 'bold 30px Arial';
-        ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2);
+        ctx.fillText('MISSION FAILED', canvas.width/2, canvas.height/2);
         ctx.font = '18px Arial'; ctx.fillText('Press [R] to Restart', canvas.width/2, canvas.height/2 + 45);
-        ctx.textAlign = 'left';
     }
     requestAnimationFrame(() => { update(); draw(); });
 }
