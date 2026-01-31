@@ -70,7 +70,7 @@
 
             // 2. micro:bitに送信
             try {
-                await writer.write(char);
+                await writer.write(char+"\r\n");
                 console.log("Sent:", char);
             } catch (error) {
                 console.error("送信エラー:", error);
