@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>リンゴ切り - Saito Programming Hub</title>
+    <style>
+        body {
+            margin: 0;
+            /**height: 100vh;**/
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            /**background-color: #f0f0f0;**/
+            font-family: sans-serif;
+            overflow: hidden;
+        }
+        /**#ui { position: absolute; top: 20px; gap: 10px; display: flex; }**/
+        button { padding: 10px 20px; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; background: white; font-weight: bold; }
+		#connect { padding: 10px 20px; font-size: 1.2rem; cursor: pointer;  border-radius: 5px; border: none;background: #0078d7; color: white; }
+
+
+        #stage {
+            position: relative;
+            width: 300px;
+            height: 300px;
+        }
+
+        .apple-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1.2), opacity 0.5s;
+        }
+
+        svg { width: 100%; height: 100%; }
+
+        /* 初期表示設定 */
+        .v-part { display: block; }
+        .s-part { display: none; }
+
+        /* 切断アニメーション */
+        .cut-v-l { transform: translateX(-150px) rotate(-30deg); opacity: 0; }
+        .cut-v-r { transform: translateX(150px) rotate(30deg); opacity: 0; }
+        .cut-s-t { transform: translateY(-150px) rotate(-10deg); opacity: 0; }
+        .cut-s-b { transform: translateY(150px) rotate(10deg); opacity: 0; }
+
+        #guide { margin-top: 30px; color: #555; }
+        /**kbd { background: #ddd; padding: 2px 5px; border-radius: 3px; font-family: monospace; }**/
+    </style>
+</head>
+<body>
+
+<h1>リンゴ切り</h1>
+    
+<button id="connect">マイクロビットに接続する(baudRate：115200bps)</button>
+
+<div id="stage">
+    <div id="v-left" class="apple-container v-part">
+        <svg viewBox="0 0 100 100">
+            <clipPath id="cp-v-l"><rect x="0" y="0" width="50" height="100"/></clipPath>
+            <g clip-path="url(#cp-v-l)">
+                <path d="M50,20 C20,20 10,40 10,60 C10,85 35,95 50,90 C65,95 90,85 90,60 C90,40 80,20 50,20" fill="#ff4d4d"/>
+                <path d="M50,20 L55,5" stroke="#6d4c41" stroke-width="3"/>
+            </g>
+        </svg>
+    </div>
+    <div id="v-right" class="apple-container v-part">
+        <svg viewBox="0 0 100 100">
+            <clipPath id="cp-v-r"><rect x="50" y="0" width="50" height="100"/></clipPath>
+            <g clip-path="url(#cp-v-r)">
+                <path d="M50,20 C20,20 10,40 10,60 C10,85 35,95 50,90 C65,95 90,85 90,60 C90,40 80,20 50,20" fill="#ff4d4d"/>
+                <path d="M50,20 L55,5" stroke="#6d4c41" stroke-width="3"/>
+            </g>
+        </svg>
+    </div>
+
+    <div id="s-top" class="apple-container s-part">
+        <svg viewBox="0 0 100 100">
+            <clipPath id="cp-s-t"><rect x="0" y="0" width="100" height="50"/></clipPath>
+            <g clip-path="url(#cp-s-t)">
+                <path d="M50,20 C20,20 10,40 10,60 C10,85 35,95 50,90 C65,95 90,85 90,60 C90,40 80,20 50,20" fill="#ff4d4d"/>
+                <path d="M50,20 L55,5" stroke="#6d4c41" stroke-width="3"/>
+            </g>
+        </svg>
+    </div>
+    <div id="s-bottom" class="apple-container s-part">
+        <svg viewBox="0 0 100 100">
+            <clipPath id="cp-s-b"><rect x="0" y="50" width="100" height="50"/></clipPath>
+            <g clip-path="url(#cp-s-b)">
+                <path d="M50,20 C20,20 10,40 10,60 C10,85 35,95 50,90 C65,95 90,85 90,60 C90,40 80,20 50,20" fill="#ff4d4d"/>
+            </g>
+        </svg>
+    </div>
+</div>
+
+<div id="guide">
+    <kbd>V</kbd> 縦割り | <kbd>S</kbd> 横割り | <kbd>R</kbd> 復活
+</div>
+
+<script>
+    const vL = document.getElementById('v-left'), vR = document.getElementById('v-right');
+    const sT = document.getElementById('s-top'), sB = document.getElementById('s-bottom');
+    const connectBtn = document.getElementById('connect');
+    let isSliced = false;
+
+    function slice(type) {
+        if (isSliced) return;
+        isSliced = true;
+
+        if (type === 'v') {
+            vL.classList.add('cut-v-l');
+            vR.classList.add('cut-v-r');
+        } else if (type === 's') {
+            vL.style.display = vR.style.display = 'none';
+            sT.style.display = sB.style.display = 'block';
+            setTimeout(() => {
+                sT.classList.add('cut-s-t');
+                sB.classList.add('cut-s-b');
+            }, 20);
+        }
+    }
+
+    function reset() {
+        isSliced = false;
+        [vL, vR, sT, sB].forEach(el => {
+            el.className = 'apple-container';
+            el.style.opacity = '1';
+        });
+        vL.style.display = vR.style.display = 'block';
+        sT.style.display = sB.style.display = 'none';
+        vL.classList.remove('cut-v-l');
+        vR.classList.remove('cut-v-r');
+    }
+
+    window.addEventListener('keydown', (e) => {
+        const k = e.key.toLowerCase();
+        if (k === 'v') slice('v');
+        if (k === 's') slice('s');
+        if (k === 'r') reset();
+    });
+
+    /**document.getElementById('reset-btn').addEventListener('click', reset);**/
+
+    connectBtn.addEventListener('click', async () => {
+        try {
+            const port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            connectBtn.innerText = "接続中";
+            const reader = port.readable.pipeThrough(new TextDecoderStream()).getReader();
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                const cmd = value.trim().toLowerCase();
+                if (cmd.includes('v')) slice('v');
+                if (cmd.includes('s')) slice('s');
+                if (cmd.includes('r')) reset();
+            }
+        } catch (e) { console.error(e); }
+    });
+</script>
+</body>
+</html>
