@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>野球 - Saito Programming Hub</title>
+    <style>
+        body {  font-family: 'Inter', -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
+        canvas { background: #27ae60; border: 4px solid #fff; border-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .ui { margin: 20px; text-align: center; }
+        button { padding: 12px 24px; font-size: 16px; cursor: pointer; background: #0078d7; color: white; border: none; border-radius: 50px; transition: 0.3s; }
+        button:hover { transform: scale(1.05); }
+        .status { font-size: 32px; font-weight: bold; margin-top: 10px; height: 40px; color: #f1c40f; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .info { padding: 10px; border-radius: 5px; margin-top: 10px; line-height: 1.6; }
+        .hit-indicator { color: #2ecc71; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>野球アニメーション</h1>
+
+    <button id="connectBtn">マイクロビットに接続する(baudRate：115200bps)</button>
+    
+    <div class="ui">
+        <div id="resultDisplay" class="status">GET READY!</div>
+        <canvas id="gameCanvas" width="600" height="400"></canvas>
+        <div class="info">
+            [A] ホームラン | [S] ヒット | [D] バント
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const resDiv = document.getElementById('resultDisplay');
+
+        let ball = { x: 600, y: 280, active: false, vx: 0, vy: 0, type: "pitch" };
+        let isSwinging = false;
+        let swingFrame = 0;
+        let swingType = ""; 
+        let pitchTimer = 0;
+
+        const batterX = 120;
+        const batterY = 250;
+        
+        // --- ゆるい判定の設定 ---
+        const hitZoneCenter = 150; 
+        const hitZoneWidth = 80; // 以前より2倍以上広く設定
+
+        function handleInput(key) {
+            const cmd = key.toLowerCase();
+            if (!['a', 's', 'd'].includes(cmd) || isSwinging) return;
+
+            isSwinging = true;
+            swingFrame = 0;
+            swingType = cmd;
+
+            if (ball.active && ball.type === "pitch") {
+                // 当たり判定の計算
+                const distance = Math.abs(ball.x - hitZoneCenter);
+                
+                if (distance < hitZoneWidth) {
+                    // ヒット成功！
+                    ball.type = (cmd === 'a') ? "homerun" : (cmd === 's' ? "hit" : "bunt");
+                    
+                    // 演出用メッセージ
+                    if (distance < 15) resDiv.textContent = "PERFECT " + ball.type.toUpperCase() + "!!";
+                    else resDiv.textContent = "GOOD " + ball.type.toUpperCase() + "!";
+                    
+                    // 打ち返しの物理挙動
+                    if (ball.type === "homerun") { ball.vx = 7 + Math.random() * 3; ball.vy = -8; }
+                    else if (ball.type === "hit") { ball.vx = 9; ball.vy = -1.5; }
+                    else { ball.vx = 1.5; ball.vy = 1; }
+                } else {
+                    resDiv.textContent = "MISS!";
+                }
+            }
+        }
+
+        // WebSerial 設定
+        document.getElementById('connectBtn').addEventListener('click', async () => {
+            try {
+                const port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                const reader = port.readable.getReader();
+                const decoder = new TextDecoder();
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    handleInput(decoder.decode(value).trim()[0]);
+                }
+            } catch(e) {}
+        });
+
+        window.addEventListener('keydown', (e) => handleInput(e.key));
+
+        function update() {
+            if (!ball.active) {
+                pitchTimer++;
+                if (pitchTimer > 80) { // 間隔も少し短くしてテンポアップ
+                    ball.active = true;
+                    ball.x = 600; ball.y = 280;
+                    ball.vx = -4.5; // 少しだけ速度を落として打ちやすく
+                    ball.vy = 0;
+                    ball.type = "pitch";
+                    pitchTimer = 0;
+                    resDiv.textContent = "PITCH!";
+                }
+            }
+
+            if (ball.active) {
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+                if (ball.type !== "pitch") ball.vy += 0.12; 
+                if (ball.x > 700 || ball.x < -100 || ball.y > 450) ball.active = false;
+            }
+
+            if (isSwinging) {
+                swingFrame++;
+                if (swingFrame > 25) isSwinging = false;
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 地面描画
+            ctx.fillStyle = "#2ecc71";
+            ctx.fillRect(0, 320, 600, 80);
+            ctx.fillStyle = "#e67e22"; // 土
+            ctx.beginPath(); ctx.ellipse(120, 330, 60, 20, 0, 0, Math.PI*2); ctx.fill();
+
+            // 判定エリアの可視化 (デバッグ用/ガイド)
+            ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+            ctx.fillRect(hitZoneCenter - hitZoneWidth, 0, hitZoneWidth * 2, 400);
+
+            drawBatter();
+
+            if (ball.active) {
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, 7, 0, Math.PI * 2);
+                ctx.fillStyle = "white"; ctx.fill();
+                ctx.strokeStyle = "#999"; ctx.stroke();
+            }
+
+            update();
+            requestAnimationFrame(draw);
+        }
+
+        function drawBatter() {
+            ctx.lineWidth = 4; ctx.strokeStyle = "#fff";
+            ctx.beginPath(); ctx.arc(batterX, batterY - 60, 15, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(batterX, batterY - 45); ctx.lineTo(batterX, batterY + 20); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(batterX, batterY + 20); ctx.lineTo(batterX - 15, batterY + 65); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(batterX, batterY + 20); ctx.lineTo(batterX + 15, batterY + 65); ctx.stroke();
+
+            let angle = -0.5; // 構え
+            if (isSwinging) {
+                angle = -0.5 + (swingFrame * 0.35);
+            }
+
+            ctx.save();
+            ctx.translate(batterX, batterY - 30);
+            ctx.rotate(angle);
+            ctx.strokeStyle = "#fff";
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(35, 10); ctx.stroke();
+            ctx.lineWidth = 9; ctx.strokeStyle = "#f39c12"; 
+            ctx.beginPath(); ctx.moveTo(30, 10); ctx.lineTo(85, 10); ctx.stroke();
+            ctx.restore();
+        }
+
+        draw();
+    </script>
+</body>
+</html>
