@@ -80,11 +80,16 @@
             }
         }
 
+        const connectBtn = document.getElementById('connectBtn');
+        
         // WebSerial 設定
-        document.getElementById('connectBtn').addEventListener('click', async () => {
+        connectBtn.addEventListener('click', async () => {
             try {
                 const port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
+
+                connectBtn.textContent = "🔌 接続中...";
+                connectBtn.disabled = true;
                 const reader = port.readable.getReader();
                 const decoder = new TextDecoder();
                 while (true) {
