@@ -94,8 +94,7 @@
 
 			// 操作していない方のレバーを戻す
 			const reset = () => {
-				console.log(el.prefix);
-                if(el.prefix == "v"){
+				if(el.prefix == "v"){
 					document.getElementById("steering").value = 0;
 				}else{
 					document.getElementById("throttle").value = 0;
