@@ -91,6 +91,13 @@
             
             // 値が変わった時（-1, 0, 1）
             el.addEventListener('input', () => sendCommand(input.prefix, el.value));
+
+			// 操作していない方のレバーを戻す
+			if(input.prefix == "v"){
+				document.getElementById("steering").value = 0;
+			}else{
+				document.getElementById("throttle").value = 0;
+			}
         });
     </script>
 </body>
