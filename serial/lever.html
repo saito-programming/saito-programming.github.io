@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>WebSerial Robot Controller</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; background: #f0f0f0; }
+        .controls { display: flex; gap: 50px; margin-top: 30px; }
+        .lever-container { display: flex; flex-direction: column; align-items: center; }
+        input[type=range] { width: 200px; height: 50px; cursor: pointer; }
+        .vertical { transform: rotate(-90deg); margin: 80px 0; }
+        button { padding: 10px 20px; font-size: 1.2rem; cursor: pointer; }
+        .status { margin-top: 20px; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>360°サーボモーター用レバー</h1>
+    <button id="connect">シリアルポートに接続</button>
+    
+    <div class="controls">
+        <div class="lever-container">
+            <label>前後 (Forward/Back)</label>
+            <input type="range" id="throttle" class="vertical" min="-1" max="1" step="1" value="0">
+        </div>
+        
+        <div class="lever-container">
+            <label>左右 (Left/Right)</label>
+            <input type="range" id="steering" min="-1" max="1" step="1" value="0">
+        </div>
+    </div>
+
+    <div class="status" id="output">接続待機中...</div>
+
+    <script>
+        let port;
+        let writer;
+
+        // シリアル接続処理
+        document.getElementById('connect').addEventListener('click', async () => {
+            try {
+                port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                writer = port.writable.getWriter();
+                document.getElementById('output').innerText = "接続済み";
+            } catch (err) {
+                console.error(err);
+                document.getElementById('output').innerText = "接続失敗";
+            }
+        });
+
+        // データを送信する関数
+        async function sendCommand(prefix, value) {
+            if (writer) {
+				let data = "";
+				if(prefix == "v"){
+					if(value == 1){			//前進
+						data = "w";
+					}else if(value == -1){	//後進
+						data = "s";
+					}else{					//停止
+						data = "p";
+					}
+				}else{
+					if(value == 1){			//ハンドルを右に回す
+						date = "d";
+					}else if(value == -1){	//ハンドルを左に回す
+						data = "a";
+					}else{					//ハンドルを戻す
+						data = "r";
+					}
+				}
+                
+                const encoder = new TextEncoder();
+                await writer.write(encoder.encode(data+"\r\n"));
+                console.log("Sent:", data);
+            }
+        }
+
+        // レバー操作イベント
+        const inputs = [
+            { id: 'throttle', prefix: 'v' }, // Vertical
+            { id: 'steering', prefix: 'h' }  // Horizontal
+        ];
+
+        inputs.forEach(input => {
+            const el = document.getElementById(input.id);
+            
+            // 値が変わった時（-1, 0, 1）
+            el.addEventListener('input', () => sendCommand(input.prefix, el.value));
+        });
+    </script>
+</body>
+</html>
