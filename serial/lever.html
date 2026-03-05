@@ -9,13 +9,12 @@
         .lever-container { display: flex; flex-direction: column; align-items: center; }
         input[type=range] { width: 200px; height: 50px; cursor: pointer; }
         .vertical { transform: rotate(-90deg); margin: 80px 0; }
-        button { padding: 10px 20px; font-size: 1.2rem; cursor: pointer; }
-        .status { margin-top: 20px; color: #666; }
+        button { padding: 10px 20px; font-size: 1.2rem; cursor: pointer; border-radius: 5px; border: none;background: #0078d7; color: white;}
     </style>
 </head>
 <body>
     <h1>360°サーボモーターレバー</h1>
-    <button id="connect">シリアルポートに接続</button>
+    <button id="connect">シリアルポートに接続(baudRate：115200bps)</button>
     
     <div class="controls">
         <div class="lever-container">
@@ -29,8 +28,6 @@
         </div>
     </div>
 
-    <div class="status" id="output">接続待機中...</div>
-
 	<div>
     	<a href="/">戻る</a>
     </div>
@@ -38,17 +35,19 @@
     <script>
         let port;
         let writer;
+		const connectBtn = document.getElementById('connect');
 
         // シリアル接続処理
-        document.getElementById('connect').addEventListener('click', async () => {
+        connectBtn.addEventListener('click', async () => {
             try {
                 port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
                 writer = port.writable.getWriter();
-                document.getElementById('output').innerText = "接続済み";
+                connectBtn.textContent = "🔌 接続中...";
+                connectBtn.disabled = true;
             } catch (err) {
                 console.error(err);
-                document.getElementById('output').innerText = "接続失敗";
+                connectBtn.textContent = "接続失敗";
             }
         });
 
