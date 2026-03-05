@@ -93,11 +93,15 @@
             el.addEventListener('input', () => sendCommand(input.prefix, el.value));
 
 			// 操作していない方のレバーを戻す
-			if(input.prefix == "v"){
-				document.getElementById("steering").value = 0;
-			}else{
-				document.getElementById("throttle").value = 0;
-			}
+			const reset = () => {
+                if(el.prefix == "v"){
+					document.getElementById("steering").value = 0;
+				}else{
+					document.getElementById("throttle").value = 0;
+				}
+            };
+            el.addEventListener('mouseup', reset);
+            el.addEventListener('touchend', reset);
         });
     </script>
 </body>
