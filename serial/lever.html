@@ -29,7 +29,7 @@
     </div>
 
 	<div class="ui">
-        [w]: 前進 | [s]: 後進 | [a]: 左折 | [d]: 右折 | [p]: 停止 | [r]: ハンドルを戻す
+        [f]: 前進 | [b]: 後進 | [l]: 左折 | [r]: 右折 | [s]: 停止 | [n]: ハンドルを戻す
     </div>
 
 	<div>
@@ -61,19 +61,19 @@
 				let data = "";
 				if(prefix == "v"){
 					if(value == 1){			//前進
-						data = "w";
+						data = "f";
 					}else if(value == -1){	//後進
-						data = "s";
+						data = "b";
 					}else{					//停止
-						data = "p";
+						data = "s";
 					}
 				}else{
 					if(value == 1){			//ハンドルを右に回す
-						data = "d";
-					}else if(value == -1){	//ハンドルを左に回す
-						data = "a";
-					}else{					//ハンドルを戻す
 						data = "r";
+					}else if(value == -1){	//ハンドルを左に回す
+						data = "l";
+					}else{					//ハンドルを戻す
+						data = "n";
 					}
 				}
                 
