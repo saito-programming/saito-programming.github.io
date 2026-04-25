@@ -201,14 +201,15 @@ footer {
 .youtube-banner {
     display: flex;
     align-items: center;
-    background: #ffcccc;
-    color: #ffffff !important;
+    background: #fff0f0; /* 薄い赤（ピンク系） */
+    color: #cc0000 !important; /* 文字を濃い赤にして可読性を確保 */
     padding: 16px 24px;
     border-radius: 12px;
     text-decoration: none;
     margin-top: 24px;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(255, 0, 0, 0.2);
+    /* シャドウも少し柔らかくすると馴染みます */
+    box-shadow: 0 4px 12px rgba(204, 0, 0, 0.1); 
 }
 
 .youtube-banner:hover {
