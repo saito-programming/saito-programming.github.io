@@ -196,3 +196,45 @@ footer {
     .link-list { grid-template-columns: 1fr; }
     .link-item .link-url { display: none; }
 }
+
+/* --- YouTube Banner --- */
+.youtube-banner {
+    display: flex;
+    align-items: center;
+    background: #ff0000;
+    color: #ffffff !important;
+    padding: 16px 24px;
+    border-radius: 12px;
+    text-decoration: none;
+    margin-top: 24px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(255, 0, 0, 0.2);
+}
+
+.youtube-banner:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 0, 0, 0.3);
+    background: #e60000;
+}
+
+.youtube-banner-icon {
+    font-size: 2rem;
+    margin-right: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.youtube-banner-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.youtube-banner-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.youtube-banner-description {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
