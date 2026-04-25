@@ -201,7 +201,7 @@ footer {
 .youtube-banner {
     display: flex;
     align-items: center;
-    background: #ff0000;
+    background: #ffcccc;
     color: #ffffff !important;
     padding: 16px 24px;
     border-radius: 12px;
