@@ -213,9 +213,9 @@ footer {
 }
 
 .youtube-banner:hover {
+    background: #ffdada; /* 元の #fff0f0 より少しだけ濃いピンク */
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 0, 0, 0.3);
-    background: #e60000;
+    box-shadow: 0 6px 16px rgba(204, 0, 0, 0.15); /* 影の赤みを抑えて透明感を出す */
 }
 
 .youtube-banner-icon {
