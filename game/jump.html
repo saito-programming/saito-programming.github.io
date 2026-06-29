@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>JSジャンプゲーム - Saito Programming Hub</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+        #controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        canvas {
+            background-color: #111;
+            border: 4px solid #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+        #info,
+        #back {
+            margin-top: 15px;
+            text-align: center;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <button id="connectBtn">シリアルポートに接続 (任意)</button>
+        <span id="status">未接続（キーボードのみでプレイ可能）</span>
+    </div>
+    
+    <!-- 最初のコードと同じ 800 x 400 の固定サイズ -->
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    
+    <div id="info">
+        <h3>操作方法:</h3>
+        <p><strong>[ j ] キー</strong> または シリアル通信でマイコンからの <strong>"j"</strong> 信号でジャンプ！</p>
+        <p>（右から来る障害物を避けてください。ゲームオーバー後は、jキーまたは画面クリックでリスタートします）</p>
+    </div>
+    
+    <div id="back">
+        <a href="/">戻る</a>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const connectBtn = document.getElementById('connectBtn');
+const statusSpan = document.getElementById('status');
+
+// ゲームの状態
+let gameState = "start"; // "start", "playing", "gameOver"
+let score = 0;
+
+// プレイヤーの設定（左側に固定配置）
+const player = {
+    x: 100, 
+    y: 300,
+    width: 30,
+    height: 40,
+    velocityY: 0,
+    gravity: 0.8,
+    jumpForce: -16,
+    isJumping: false,
+    color: '#00f2fe' // ネオン水色
+};
+
+// 障害物の設定（右から出現）
+const obstacles = [];
+const obstacleInterval = 100;
+let framesSinceLastObstacle = 0;
+
+// トリガーアクション（ジャンプ / スタート / リスタート共通）
+function triggerAction() {
+    if (gameState === "start") {
+        gameState = "playing";
+    } else if (gameState === "gameOver") {
+        obstacles.length = 0;
+        score = 0;
+        player.y = 300;
+        player.velocityY = 0;
+        player.isJumping = false;
+        framesSinceLastObstacle = 0;
+        gameState = "playing";
+    } else if (gameState === "playing" && !player.isJumping) {
+        player.velocityY = player.jumpForce;
+        player.isJumping = true;
+    }
+}
+
+// 1. キーボード操作（Jキー）
+window.addEventListener('keydown', (e) => {
+    if (e.key === 'j' || e.key === 'J') {
+        triggerAction();
+    }
+});
+
+// 2. 画面クリック
+canvas.addEventListener('click', () => {
+    triggerAction();
+});
+
+// 更新処理
+function update() {
+    if (gameState !== "playing") return;
+
+    // プレイヤーの物理演算
+    player.velocityY += player.gravity;
+    player.y += player.velocityY;
+
+    // 地面との当たり判定 (y=300で接地)
+    if (player.y >= 300) {
+        player.y = 300;
+        player.velocityY = 0;
+        player.isJumping = false;
+    }
+
+    // 障害物の自動生成（右端 x=800 から出現）
+    framesSinceLastObstacle++;
+    if (framesSinceLastObstacle > obstacleInterval) {
+        let obsHeight = 30 + Math.random() * 40;
+        obstacles.push({
+            x: 850, // 画面外の右側から
+            y: 350 - obsHeight,
+            width: 25,
+            height: obsHeight,
+            speed: 6 + Math.random() * 4,
+            color: '#ff00ff' // ネオンマゼンタ
+        });
+        framesSinceLastObstacle = 0;
+    }
+
+    // 障害物の移動と削除（左へ流れる）
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+        obstacles[i].x -= obstacles[i].speed;
+
+        // 衝突判定
+        if (
+            player.x < obstacles[i].x + obstacles[i].width &&
+            player.x + player.width > obstacles[i].x &&
+            player.y < obstacles[i].y + obstacles[i].height &&
+            player.y + player.height > obstacles[i].y
+        ) {
+            gameState = "gameOver";
+        }
+
+        // 画面左端に消えたら削除してスコア加算
+        if (obstacles[i].x + obstacles[i].width < 0) {
+            obstacles.splice(i, 1);
+            score += 1;
+        }
+    }
+}
+
+// 描画処理
+function draw() {
+    // 画面クリア
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 地面の描画
+    ctx.fillStyle = '#222';
+    ctx.fillRect(0, 350, canvas.width, 50);
+    ctx.strokeStyle = '#444';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 350);
+    ctx.lineTo(canvas.width, 350);
+    ctx.stroke();
+
+    // プレイヤーの描画（ネオン効果）
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = player.color;
+    ctx.fillStyle = player.color;
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+    ctx.shadowBlur = 0;
+
+    // 障害物の描画（ネオン効果）
+    for (const obs of obstacles) {
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = obs.color;
+        ctx.fillStyle = obs.color;
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+        ctx.shadowBlur = 0;
+    }
+
+    // UIの描画
+    ctx.fillStyle = '#fff';
+    ctx.font = '20px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`SCORE: ${score}`, 20, 40);
+    
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#ffff00';
+    // スタート画面
+    if (gameState === "start") {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.font = '30px sans-serif';
+        ctx.fillText('Press [ J ] to Start Game', canvas.width / 2, canvas.height / 2);
+    }
+
+    // ゲームオーバー画面
+    if (gameState === "gameOver") {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.font = '40px sans-serif';
+        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 10);
+        ctx.font = '22px sans-serif';
+        ctx.fillStyle = '#ffff00';
+        ctx.fillText('Press [ J ] to Restart', canvas.width / 2, canvas.height / 2 + 40);
+    }
+}
+
+// ゲームループ
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+// --- Web Serial API の処理 ---
+connectBtn.addEventListener('click', async () => {
+    if ('serial' in navigator) {
+        try {
+            statusSpan.textContent = '接続中...';
+            const port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            
+            statusSpan.textContent = '接続完了';
+            statusSpan.style.color = '#00f2fe';
+            connectBtn.style.display = 'none';
+
+            const textDecoder = new TextDecoderStream();
+            const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+            const reader = textDecoder.readable.getReader();
+
+            let buffer = '';
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    reader.releaseLock();
+                    break;
+                }
+                if (value) {
+                    buffer += value;
+                    if (buffer.includes('\n')) {
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop(); 
+                        
+                        for (const line of lines) {
+                            const command = line.trim();
+                            if (command === 'j') {
+                                triggerAction();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Serial Error:', error);
+            statusSpan.textContent = '接続失敗';
+            statusSpan.style.color = '#ff00ff';
+        }
+    } else {
+        alert('Web Serial APIに非対応のブラウザです。ChromeかEdgeをご使用ください。');
+    }
+});
+
+// ループ開始
+gameLoop();
+</script>
+</body>
+</html>
