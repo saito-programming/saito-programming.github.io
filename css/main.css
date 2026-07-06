@@ -250,9 +250,9 @@ footer {
     border-radius: 8px;
     border: 1px solid #d0d7de;
     transition: background-color 0.2s ease, border-color 0.2s ease;
-  }
-  /* マウスを乗せた（ホバー）ときの変化 */
-  .github-banner:hover {
+}
+/* マウスを乗せた（ホバー）ときの変化 */
+.github-banner:hover {
     background-color: #eaeef2; /* 少し濃い明るいグレー */
     border-color: #0969da;     /* 枠線がGitHub公式の綺麗な青色になります */
-  }
+}
