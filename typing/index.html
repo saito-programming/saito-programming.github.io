@@ -176,6 +176,11 @@
       border-bottom-width: 2px;
     }
 
+    .key-btn.symbol {
+      background-color: #0284c7;
+      border-bottom-color: #0369a1;
+    }
+
     .key-btn.backspace {
       width: 15%;
       max-width: 65px;
@@ -223,7 +228,7 @@
 <body>
 
 <div class="container">
-  <h1>ローマ字れんしゅう 300</h1>
+  <h1>ローマ字れんしゅう 1000</h1>
 
   <!-- 進捗表示 -->
   <div class="progress-container" id="progress-area" style="display: none;">
@@ -253,10 +258,11 @@
   let currentInput = "";
   let isUpperCase = true;
 
+  // 「-（ハイフン/のばす）」をキー配列に追加
   const keyLayout = [
     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
     ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
-    ["Z", "X", "C", "V", "B", "N", "M", "DELETE"]
+    ["Z", "X", "C", "V", "B", "N", "M", "-", "DELETE"]
   ];
 
   // 1. JSONデータの非同期取得と初期化
@@ -333,6 +339,10 @@
           btn.textContent = "けす";
           btn.className = "key-btn backspace";
           btn.onclick = () => handleBackspace();
+        } else if (key === "-") {
+          btn.textContent = "-";
+          btn.className = "key-btn symbol";
+          btn.onclick = () => handleInputChar("-");
         } else {
           btn.textContent = isUpperCase ? key : key.toLowerCase();
           btn.className = "key-btn";
@@ -431,9 +441,9 @@
     }, 1000);
   }
 
-  // 物理キーボード入力対応
+  // 物理キーボード入力対応（アルファベットおよび「-」キーに対応）
   function handlePhysicalKeyPress(e) {
-    if (/^[a-zA-Z]$/.test(e.key)) {
+    if (/^[a-zA-Z\-]$/.test(e.key)) {
       handleInputChar(e.key.toUpperCase());
     } else if (e.key === "Backspace") {
       handleBackspace();
