@@ -15,6 +15,7 @@
     body {
       background-color: #f0f9ff;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
@@ -151,7 +152,7 @@
     .key-row {
       display: flex;
       justify-content: center;
-      gap: 5px;
+      gap: 4px;
     }
 
     .key-btn {
@@ -160,7 +161,8 @@
       border: none;
       border-bottom: 4px solid #1d4ed8;
       border-radius: 8px;
-      width: 42px;
+      width: 8.5%;
+      max-width: 42px;
       height: 46px;
       font-size: 1.2rem;
       font-weight: bold;
@@ -175,7 +177,8 @@
     }
 
     .key-btn.backspace {
-      width: 65px;
+      width: 15%;
+      max-width: 65px;
       background-color: #ef4444;
       border-bottom-color: #b91c1c;
       font-size: 0.95rem;
@@ -197,6 +200,20 @@
       font-weight: bold;
     }
 
+    .back-link {
+      margin-top: 15px;
+    }
+
+    .back-link a {
+      color: #475569;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+
     @keyframes bounce {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
@@ -206,13 +223,13 @@
 <body>
 
 <div class="container">
-  <h1>ローマ字れんしゅう 1000</h1>
+  <h1>ローマ字れんしゅう 300</h1>
 
   <!-- 進捗表示 -->
   <div class="progress-container" id="progress-area" style="display: none;">
     <div class="progress-info">
       <span>クリア数: <span id="cleared-count">0</span> 問</span>
-      <!--span>のこり: <span id="remaining-count">0</span> 問</span-->
+      <span>のこり: <span id="remaining-count">0</span> 問</span>
     </div>
     <div class="progress-bar-bg">
       <div id="progress-bar" class="progress-bar-fill"></div>
@@ -223,6 +240,10 @@
   <div id="main-content">
     <div class="loading">問題を読み込み中...</div>
   </div>
+</div>
+
+<div class="back-link">
+  <a href="/">戻る</a>
 </div>
 
 <script>
@@ -242,12 +263,11 @@
   async function init() {
     try {
       const response = await fetch('questions.json');
-      console.log(response);
       if (!response.ok) throw new Error('JSONの読み込みに失敗しました');
       
       const rawData = await response.json();
       
-      // 300問をランダムシャッフル
+      // 問題データをシャッフル
       questions = shuffleArray(rawData);
 
       // 画面の構築
@@ -345,11 +365,15 @@
   function updateProgressUI() {
     const total = questions.length;
     const remaining = total - clearedCount;
-    const percentage = (clearedCount / total) * 100;
+    const percentage = total > 0 ? (clearedCount / total) * 100 : 0;
 
-    document.getElementById("cleared-count").textContent = clearedCount;
-    document.getElementById("remaining-count").textContent = remaining;
-    document.getElementById("progress-bar").style.width = `${percentage}%`;
+    const clearedEl = document.getElementById("cleared-count");
+    const remainingEl = document.getElementById("remaining-count");
+    const progressBar = document.getElementById("progress-bar");
+
+    if (clearedEl) clearedEl.textContent = clearedCount;
+    if (remainingEl) remainingEl.textContent = remaining;
+    if (progressBar) progressBar.style.width = `${percentage}%`;
   }
 
   // 大文字/小文字切替
@@ -366,10 +390,10 @@
     if (questions.length === 0) return;
     
     const q = questions[currentQIndex];
-    currentInput += charUpper;
+    currentInput += charUpper.toUpperCase();
     updateDisplay();
 
-    // 複数正解リスト（訓令式・ヘボン式など）のいずれかと一致すれば正解
+    // valid配列内の文字列と判定（大文字に揃えて照合）
     const isCorrect = q.valid.some(val => val.toUpperCase() === currentInput);
     if (isCorrect) {
       handleSuccess();
@@ -419,6 +443,5 @@
   // 起動
   init();
 </script>
-
 </body>
 </html>
