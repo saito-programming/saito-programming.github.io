@@ -1,0 +1,10 @@
+[
+  { "kana": "ねこ", "valid": ["NEKO"], "emoji": "🐱", "hint": "neko" },
+  { "kana": "いぬ", "valid": ["INU"], "emoji": "🐶", "hint": "inu" },
+  { "kana": "すいか", "valid": ["SUIKA"], "emoji": "🍉", "hint": "suika" },
+  { "kana": "さかな", "valid": ["SAKANA"], "emoji": "🐟", "hint": "sakana" },
+  { "kana": "しんかんせん", "valid": ["SHINKANSEN", "SINKANSEN"], "emoji": "🚅", "hint": "shinkansen / sinkansen" },
+  { "kana": "つみき", "valid": ["TSUMIKI", "TUMIKI"], "emoji": "🧱", "hint": "tsumiki / tumiki" },
+  { "kana": "ちず", "valid": ["CHIZU", "TIZU"], "emoji": "🗺️", "hint": "chizu / tizu" },
+  { "kana": "ふね", "valid": ["FUNE", "HUNE"], "emoji": "🚢", "hint": "fune / hune" }
+]
