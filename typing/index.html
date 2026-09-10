@@ -87,8 +87,7 @@
       font-size: 2.2rem;
       font-weight: bold;
       color: #1d4ed8;
-      margin: 5px 0;
-      letter-spacing: 2px;
+      margin: 5px 0;      letter-spacing: 2px;
     }
 
     .target-hint {
@@ -189,6 +188,24 @@
       font-size: 0.95rem;
     }
 
+    /* 次に打つキーのハイライトアニメーション付きスタイル */
+    .key-btn.next-key {
+      background-color: #f59e0b !important;
+      border-bottom-color: #d97706 !important;
+      animation: pulse-key 1.2s infinite alternate ease-in-out;
+    }
+
+    @keyframes pulse-key {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 0 0px rgba(245, 158, 11, 0);
+      }
+      100% {
+        transform: scale(1.08);
+        box-shadow: 0 0 12px rgba(245, 158, 11, 0.8);
+      }
+    }
+
     .message {
       font-size: 1.2rem;
       font-weight: bold;
@@ -270,9 +287,9 @@
     try {
       const response = await fetch('questions.json');
       if (!response.ok) throw new Error('JSONの読み込みに失敗しました');
-      
+
       const rawData = await response.json();
-      
+
       // 問題データをシャッフル
       questions = shuffleArray(rawData);
 
@@ -302,7 +319,7 @@
   // UI骨格の生成
   function setupAppUI() {
     document.getElementById("progress-area").style.display = "block";
-    
+
     const mainContent = document.getElementById("main-content");
     mainContent.innerHTML = `
       <div class="card">
@@ -323,11 +340,30 @@
     `;
   }
 
+  // 次に入力すべき有効なキーの文字集合を取得（大文字）
+  function getNextValidKeys() {
+    if (questions.length === 0) return new Set();
+    const q = questions[currentQIndex];
+    const inputUpper = currentInput.toUpperCase();
+    const nextKeys = new Set();
+
+    q.valid.forEach(val => {
+      const valUpper = val.toUpperCase();
+      if (valUpper.startsWith(inputUpper) && valUpper.length > inputUpper.length) {
+        nextKeys.add(valUpper[inputUpper.length]);
+      }
+    });
+
+    return nextKeys;
+  }
+
   // キーボード描画
   function renderKeyboard() {
     const kbContainer = document.getElementById("keyboard");
     if (!kbContainer) return;
     kbContainer.innerHTML = "";
+
+    const nextKeys = getNextValidKeys();
 
     keyLayout.forEach(row => {
       const rowDiv = document.createElement("div");
@@ -339,13 +375,15 @@
           btn.textContent = "けす";
           btn.className = "key-btn backspace";
           btn.onclick = () => handleBackspace();
-        } else if (key === "-") {
-          btn.textContent = "-";
-          btn.className = "key-btn symbol";
-          btn.onclick = () => handleInputChar("-");
         } else {
           btn.textContent = isUpperCase ? key : key.toLowerCase();
-          btn.className = "key-btn";
+          btn.className = key === "-" ? "key-btn symbol" : "key-btn";
+
+          // 次に入力すべきキーであれば強調表示用クラスを追加
+          if (nextKeys.has(key)) {
+            btn.classList.add("next-key");
+          }
+
           btn.onclick = () => handleInputChar(key);
         }
         rowDiv.appendChild(btn);
@@ -362,10 +400,11 @@
     document.getElementById("emoji").textContent = q.emoji || "✏️";
     document.getElementById("kana").textContent = q.kana;
     document.getElementById("hint").textContent = `（ローマじ: ${q.hint}）`;
-    
+
     currentInput = "";
     updateDisplay();
     updateProgressUI();
+    renderKeyboard();
 
     document.getElementById("message").textContent = "";
     document.getElementById("display").classList.remove("correct");
@@ -398,7 +437,7 @@
   // 文字入力判定
   function handleInputChar(charUpper) {
     if (questions.length === 0) return;
-    
+
     const q = questions[currentQIndex];
     currentInput += charUpper.toUpperCase();
     updateDisplay();
@@ -407,6 +446,8 @@
     const isCorrect = q.valid.some(val => val.toUpperCase() === currentInput);
     if (isCorrect) {
       handleSuccess();
+    } else {
+      renderKeyboard();
     }
   }
 
@@ -414,6 +455,7 @@
   function handleBackspace() {
     currentInput = currentInput.slice(0, -1);
     updateDisplay();
+    renderKeyboard();
   }
 
   // 表示更新
@@ -434,6 +476,7 @@
 
     clearedCount++;
     updateProgressUI();
+    renderKeyboard();
 
     setTimeout(() => {
       currentQIndex = (currentQIndex + 1) % questions.length;
