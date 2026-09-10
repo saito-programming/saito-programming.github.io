@@ -111,7 +111,8 @@
     }
 
     .input-display.correct {
-      border-color: #22c55e;      background-color: #f0fdf4;
+      border-color: #22c55e;
+      background-color: #f0fdf4;
       color: #15803d;
       animation: bounce 0.4s ease;
     }
@@ -167,12 +168,19 @@
       font-weight: bold;
       cursor: pointer;
       user-select: none;
-      transition: transform 0.1s, background-color 0.1s;
+      transition: transform 0.1s, background-color 0.2s;
     }
 
     .key-btn:active {
       transform: translateY(2px);
       border-bottom-width: 2px;
+    }
+
+    /* 次に入力すべきキーのハイライト表示（オレンジ色＆点滅） */
+    .key-btn.target-key {
+      background-color: #f97316 !important;
+      border-bottom-color: #c2410c !important;
+      animation: pulse-target 1.2s infinite ease-in-out;
     }
 
     .key-btn.backspace {
@@ -208,6 +216,11 @@
     @keyframes bounce {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
+    }
+
+    @keyframes pulse-target {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
     }
   </style>
 </head>
@@ -252,7 +265,7 @@
 </div>
 
 <script>
-  // AからZまでの問題データ一覧（単語例・絵文字付き）
+  // AからZまでの問題データ一覧
   const questions = [
     { char: "A", name: "Apple", emoji: "🍎" },
     { char: "B", name: "Bear", emoji: "🐻" },
@@ -307,6 +320,8 @@
     if (!kbContainer) return;
     kbContainer.innerHTML = "";
 
+    const targetCharUpper = questions[currentQIndex]?.char;
+
     keyLayout.forEach(row => {
       const rowDiv = document.createElement("div");
       rowDiv.className = "key-row";
@@ -320,6 +335,12 @@
         } else {
           btn.textContent = isUpperCase ? key : key.toLowerCase();
           btn.className = "key-btn";
+          
+          // 正解のキーにハイライト用のクラスを追加
+          if (key === targetCharUpper) {
+            btn.classList.add("target-key");
+          }
+
           btn.onclick = () => handleInputChar(key);
         }
         rowDiv.appendChild(btn);
@@ -328,11 +349,9 @@
     });
   }
 
-  // 出題処理（Aから順番に出題）
+  // 出題処理
   function showQuestion() {
     const q = questions[currentQIndex];
-    
-    // 大文字・小文字の表示切り替え
     const targetChar = isUpperCase ? q.char : q.char.toLowerCase();
     
     document.getElementById("emoji").textContent = q.emoji;
@@ -342,6 +361,7 @@
     currentInput = "";
     updateDisplay();
     updateProgressUI();
+    renderKeyboard(); // キーボードのハイライト位置を更新
 
     document.getElementById("message").textContent = "";
     document.getElementById("display").classList.remove("correct");
@@ -364,7 +384,6 @@
     isUpperCase = (caseType === 'upper');
     document.getElementById("btn-upper").classList.toggle("active", isUpperCase);
     document.getElementById("btn-lower").classList.toggle("active", !isUpperCase);
-    renderKeyboard();
     showQuestion();
   }
 
@@ -374,7 +393,6 @@
     currentInput = charUpper.toUpperCase();
     updateDisplay();
 
-    // 目的のアルファベットと一致するか判定
     if (currentInput === q.char) {
       handleSuccess();
     }
@@ -407,7 +425,6 @@
 
     setTimeout(() => {
       if (clearedCount >= questions.length) {
-        // 全問クリア時
         document.getElementById("main-content").innerHTML = `
           <div class="card" style="padding: 40px 20px;">
             <div style="font-size: 4rem;">🎉</div>
@@ -417,7 +434,6 @@
           </div>
         `;
       } else {
-        // 次の問題（A → B → C ...）へ
         currentQIndex++;
         showQuestion();
       }
