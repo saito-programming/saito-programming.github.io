@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>たのしい ローマ字れんしゅう (あ〜ん)</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    }
+
+    body {
+      background-color: #f0f9ff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background-color: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 600px;
+      padding: 25px;
+      text-align: center;
+      border: 4px solid #3b82f6;
+      position: relative;
+    }
+
+    h1 {
+      color: #1e3a8a;
+      font-size: 1.6rem;
+      margin-bottom: 10px;
+    }
+
+    /* プログレスバー・カウンター */
+    .progress-container {
+      margin-bottom: 15px;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+      color: #475569;
+      font-size: 0.95rem;
+      margin-bottom: 5px;
+    }
+
+    .progress-bar-bg {
+      background-color: #e2e8f0;
+      border-radius: 10px;
+      height: 12px;
+      overflow: hidden;
+      width: 100%;
+    }
+
+    .progress-bar-fill {
+      background-color: #22c55e;
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* 問題カード */
+    .card {
+      background-color: #eff6ff;
+      border-radius: 15px;
+      padding: 15px;
+      margin-bottom: 15px;
+      border: 2px dashed #60a5fa;
+    }
+
+    .question-emoji {
+      font-size: 3.5rem;
+      line-height: 1.2;
+    }
+
+    .question-kana {
+      font-size: 2.8rem;
+      font-weight: bold;
+      color: #1d4ed8;
+      margin: 5px 0;
+      letter-spacing: 2px;
+    }
+
+    .target-hint {
+      font-size: 1.1rem;
+      color: #64748b;
+    }
+
+    /* 入力エリア */
+    .input-display {
+      font-size: 2.3rem;
+      font-weight: bold;
+      letter-spacing: 4px;
+      min-height: 55px;
+      line-height: 55px;
+      background-color: #f8fafc;
+      border: 3px solid #cbd5e1;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      color: #0f172a;
+    }
+
+    .input-display.correct {
+      border-color: #22c55e;
+      background-color: #f0fdf4;
+      color: #15803d;
+      animation: bounce 0.4s ease;
+    }
+
+    /* トグルボタン（大文字／小文字切り替え） */
+    .toggle-container {
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .btn-toggle {
+      background-color: #e2e8f0;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      cursor: pointer;
+      color: #475569;
+      transition: all 0.2s;
+    }
+
+    .btn-toggle.active {
+      background-color: #3b82f6;
+      color: white;
+    }
+
+    /* 画面キーボード */
+    .keyboard {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .key-row {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .key-btn {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      border-bottom: 4px solid #1d4ed8;
+      border-radius: 8px;
+      width: 8.5%;
+      max-width: 42px;
+      height: 46px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.1s, background-color 0.2s;
+    }
+
+    .key-btn:active {
+      transform: translateY(2px);
+      border-bottom-width: 2px;
+    }
+
+    /* 次に入力すべきキーのハイライト表示（オレンジ色＆点滅） */
+    .key-btn.target-key {
+      background-color: #f97316 !important;
+      border-bottom-color: #c2410c !important;
+      animation: pulse-target 1.2s infinite ease-in-out;
+    }
+
+    .key-btn.backspace {
+      width: 18%;
+      max-width: 75px;
+      background-color: #ef4444;
+      border-bottom-color: #b91c1c;
+      font-size: 0.95rem;
+    }
+
+    .message {
+      font-size: 1.2rem;
+      font-weight: bold;
+      height: 30px;
+      margin-top: 10px;
+      color: #16a34a;
+    }
+
+    .back-link {
+      margin-top: 15px;
+    }
+
+    .back-link a {
+      color: #475569;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .back-link a:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes pulse-target {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>ローマ字れんしゅう (あ〜ん)</h1>
+
+  <!-- 進捗表示 -->
+  <div class="progress-container" id="progress-area">
+    <div class="progress-info">
+      <span>クリア数: <span id="cleared-count">0</span> / <span id="total-count">46</span></span>
+      <span>のこり: <span id="remaining-count">46</span> 問</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div id="progress-bar" class="progress-bar-fill"></div>
+    </div>
+  </div>
+
+  <!-- コンテンツ表示域 -->
+  <div id="main-content">
+    <div class="card">
+      <div id="emoji" class="question-emoji">✏️</div>
+      <div id="kana" class="question-kana">あ</div>
+      <div id="hint" class="target-hint">...</div>
+    </div>
+
+    <div id="display" class="input-display"></div>
+
+    <div class="toggle-container">
+      <button id="btn-upper" class="btn-toggle active" onclick="setCase('upper')">おおもじ (A)</button>
+      <button id="btn-lower" class="btn-toggle" onclick="setCase('lower')">こもじ (a)</button>
+    </div>
+
+    <div class="keyboard" id="keyboard"></div>
+    <div id="message" class="message"></div>
+  </div>
+</div>
+
+<div class="back-link">
+  <a href="/">戻る</a>
+</div>
+
+<script>
+  // 五十音順（あ〜ん）のローマ字データ
+  const questions = [
+    // あ行
+    { kana: "あ", roma: "A", emoji: "🫲" },
+    { kana: "い", roma: "I", emoji: "🍓" },
+    { kana: "う", roma: "U", emoji: "🐇" },
+    { kana: "え", roma: "E", emoji: "🖼️" },
+    { kana: "お", roma: "O", emoji: "🍫" },
+    // か行
+    { kana: "か", roma: "KA", emoji: "🦛" },
+    { kana: "き", roma: "KI", emoji: "🌲" },
+    { kana: "く", roma: "KU", emoji: "🐻" },
+    { kana: "け", roma: "KE", emoji: "🧶" },
+    { kana: "こ", roma: "KO", emoji: "🪙" },
+    // さ行
+    { kana: "さ", roma: "SA", emoji: "🐟" },
+    { kana: "し", roma: "SI", romaAlt: "SHI", emoji: "🦌" },
+    { kana: "す", roma: "SU", emoji: "🍉" },
+    { kana: "せ", roma: "SE", emoji: "🧼" },
+    { kana: "そ", roma: "SO", emoji: "🍦" },
+    // た行
+    { kana: "た", roma: "TA", emoji: "🐙" },
+    { kana: "ち", roma: "TI", romaAlt: "CHI", emoji: "🧀" },
+    { kana: "つ", roma: "TU", romaAlt: "TSU", emoji: "🌙" },
+    { kana: "て", roma: "TE", emoji: "✋" },
+    { kana: "と", roma: "TO", emoji: "🐯" },
+    // な行
+    { kana: "な", roma: "NA", emoji: "🍆" },
+    { kana: "に", roma: "NI", emoji: "🥕" },
+    { kana: "ぬ", roma: "NU", emoji: "🧸" },
+    { kana: "ね", roma: "NE", emoji: "🐱" },
+    { kana: "の", roma: "NO", emoji: "📜" },
+    // は行
+    { kana: "は", roma: "HA", emoji: "🌸" },
+    { kana: "ひ", roma: "HI", emoji: "🔥" },
+    { kana: "ふ", roma: "HU", romaAlt: "FU", emoji: "🎈" },
+    { kana: "へ", roma: "HE", emoji: "🐍" },
+    { kana: "ほ", roma: "HO", emoji: "⭐" },
+    // ま行
+    { kana: "ま", roma: "MA", emoji: "🪙" },
+    { kana: "み", roma: "MI", emoji: "🍊" },
+    { kana: "む", roma: "MU", emoji: "🐛" },
+    { kana: "め", roma: "ME", emoji: "👁️" },
+    { kana: "も", roma: "MO", emoji: "🍑" },
+    // や行
+    { kana: "や", roma: "YA", emoji: "🏹" },
+    { kana: "ゆ", roma: "YU", emoji: "☃️" },
+    { kana: "よ", roma: "YO", emoji: "🪀" },
+    // ら行
+    { kana: "ら", roma: "RA", emoji: "📻" },
+    { kana: "り", roma: "RI", emoji: "🍎" },
+    { kana: "る", roma: "RU", emoji: "💎" },
+    { kana: "れ", roma: "RE", emoji: "🍋" },
+    { kana: "ろ", roma: "RO", emoji: "🤖" },
+    // わ行
+    { kana: "わ", roma: "WA", emoji: "🐊" },
+    { kana: "を", roma: "WO", emoji: "🎒" },
+    { kana: "ん", roma: "NN", romaAlt: "N", emoji: "🍞" }
+  ];
+
+  let currentQIndex = 0;
+  let clearedCount = 0;
+  let currentInput = "";
+  let isUpperCase = true;
+
+  // QWERTY配列
+  const keyLayout = [
+    ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
+    ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
+    ["Z", "X", "C", "V", "B", "N", "M", "DELETE"]
+  ];
+
+  // 初期化
+  function init() {
+    renderKeyboard();
+    showQuestion();
+    document.addEventListener("keydown", handlePhysicalKeyPress);
+  }
+
+  // 次に押すべきキーを判定（途中入力対応）
+  function getNextTargetKey() {
+    const q = questions[currentQIndex];
+    if (!q) return null;
+
+    // 標準表記と別表記（SHI, CHI等）の両方に対応
+    const candidates = [q.roma];
+    if (q.romaAlt) candidates.push(q.romaAlt);
+
+    for (let target of candidates) {
+      if (target.startsWith(currentInput)) {
+        return target.charAt(currentInput.length);
+      }
+    }
+    return q.roma.charAt(0);
+  }
+
+  // キーボード描画
+  function renderKeyboard() {
+    const kbContainer = document.getElementById("keyboard");
+    if (!kbContainer) return;
+    kbContainer.innerHTML = "";
+
+    const nextChar = getNextTargetKey();
+
+    keyLayout.forEach(row => {
+      const rowDiv = document.createElement("div");
+      rowDiv.className = "key-row";
+
+      row.forEach(key => {
+        const btn = document.createElement("button");
+        if (key === "DELETE") {
+          btn.textContent = "けす";
+          btn.className = "key-btn backspace";
+          btn.onclick = () => handleBackspace();
+        } else {
+          btn.textContent = isUpperCase ? key : key.toLowerCase();
+          btn.className = "key-btn";
+          
+          // 次に打つべきキーをハイライト
+          if (nextChar && key === nextChar) {
+            btn.classList.add("target-key");
+          }
+
+          btn.onclick = () => handleInputChar(key);
+        }
+        rowDiv.appendChild(btn);
+      });
+      kbContainer.appendChild(rowDiv);
+    });
+  }
+
+  // 出題処理（あ→い→う...順）
+  function showQuestion() {
+    const q = questions[currentQIndex];
+    const displayRoma = isUpperCase ? q.roma : q.roma.toLowerCase();
+    
+    document.getElementById("emoji").textContent = q.emoji;
+    document.getElementById("kana").textContent = q.kana;
+    document.getElementById("hint").textContent = `（ローマじ: ${displayRoma}）`;
+        
+    currentInput = "";
+    updateDisplay();
+    updateProgressUI();
+    renderKeyboard();
+
+    document.getElementById("message").textContent = "";
+    document.getElementById("display").classList.remove("correct");
+  }
+
+  // 進捗状況の更新
+  function updateProgressUI() {
+    const total = questions.length;
+    const remaining = total - clearedCount;
+    const percentage = (clearedCount / total) * 100;
+
+    document.getElementById("total-count").textContent = total;
+    document.getElementById("cleared-count").textContent = clearedCount;
+    document.getElementById("remaining-count").textContent = remaining;
+    document.getElementById("progress-bar").style.width = `${percentage}%`;
+  }
+
+  // 大文字/小文字切替
+  function setCase(caseType) {
+    isUpperCase = (caseType === 'upper');
+    document.getElementById("btn-upper").classList.toggle("active", isUpperCase);
+    document.getElementById("btn-lower").classList.toggle("active", !isUpperCase);
+    showQuestion();
+  }
+
+  // 文字入力判定
+  function handleInputChar(charUpper) {
+    const q = questions[currentQIndex];
+    const newInput = currentInput + charUpper.toUpperCase();
+
+    // 正解パターン（例: SI または SHI）
+    const validPatterns = [q.roma];
+    if (q.romaAlt) validPatterns.push(q.romaAlt);
+
+    // 入力が正解パターンと前方一致しているかチェック
+    const isValidPrefix = validPatterns.some(pattern => pattern.startsWith(newInput));
+
+    if (isValidPrefix) {
+      currentInput = newInput;
+      updateDisplay();
+      renderKeyboard(); // 次に打つキーのハイライトを更新
+
+      // 完全一致したら正解処理
+      if (validPatterns.includes(currentInput)) {
+        handleSuccess();
+      }
+    } else {
+      // 間違えた場合は入力を受け付けず、枠を少し強調（ミス防止）
+      const displayEl = document.getElementById("display");
+      displayEl.style.borderColor = "#ef4444";
+      setTimeout(() => {
+        displayEl.style.borderColor = "#cbd5e1";
+      }, 300);
+    }
+  }
+
+  // 1文字削除
+  function handleBackspace() {
+    currentInput = currentInput.slice(0, -1);
+    updateDisplay();
+    renderKeyboard();
+  }
+
+  // 表示更新
+  function updateDisplay() {
+    const displayEl = document.getElementById("display");
+    if (displayEl) {
+      displayEl.textContent = isUpperCase ? currentInput : currentInput.toLowerCase();
+    }
+  }
+
+  // 正解時の挙動
+  function handleSuccess() {
+    const displayEl = document.getElementById("display");
+    const msgEl = document.getElementById("message");
+
+    displayEl.classList.add("correct");
+    msgEl.textContent = "せいかい！ すごいね！ ✨";
+
+    clearedCount++;
+    updateProgressUI();
+
+    setTimeout(() => {
+      if (clearedCount >= questions.length) {
+        document.getElementById("main-content").innerHTML = `
+          <div class="card" style="padding: 40px 20px;">
+            <div style="font-size: 4rem;">🎉</div>
+            <h2 style="color: #1e3a8a; margin: 15px 0;">ぜんぶ クリア！</h2>
+            <p style="color: #475569; font-weight: bold; font-size: 1.2rem;">あからんまで ローマじマスターだね！</p>
+            <button onclick="location.reload()" class="btn-toggle active" style="margin-top: 20px; font-size: 1.1rem; padding: 10px 20px;">もういちど れんしゅうする</button>
+          </div>
+        `;
+      } else {
+        currentQIndex++;
+        showQuestion();
+      }
+    }, 900);
+  }
+
+  // 物理キーボード入力対応
+  function handlePhysicalKeyPress(e) {
+    if (/^[a-zA-Z]$/.test(e.key)) {
+      handleInputChar(e.key.toUpperCase());
+    } else if (e.key === "Backspace") {
+      handleBackspace();
+    }
+  }
+
+  // 起動
+  init();
+</script>
+</body>
+</html>
