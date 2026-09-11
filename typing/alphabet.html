@@ -11,7 +11,6 @@
       padding: 0;
       font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
     }
-
     body {
       background-color: #f0f9ff;
       display: flex;
@@ -21,7 +20,6 @@
       min-height: 100vh;
       padding: 20px;
     }
-
     .container {
       background-color: #ffffff;
       border-radius: 20px;
@@ -33,18 +31,15 @@
       border: 4px solid #3b82f6;
       position: relative;
     }
-
     h1 {
       color: #1e3a8a;
       font-size: 1.6rem;
       margin-bottom: 10px;
     }
-
     /* プログレスバー・カウンター */
     .progress-container {
       margin-bottom: 15px;
     }
-
     .progress-info {
       display: flex;
       justify-content: space-between;
@@ -53,7 +48,6 @@
       font-size: 0.95rem;
       margin-bottom: 5px;
     }
-
     .progress-bar-bg {
       background-color: #e2e8f0;
       border-radius: 10px;
@@ -61,14 +55,12 @@
       overflow: hidden;
       width: 100%;
     }
-
     .progress-bar-fill {
       background-color: #22c55e;
       height: 100%;
       width: 0%;
       transition: width 0.3s ease;
     }
-
     /* 問題カード */
     .card {
       background-color: #eff6ff;
@@ -77,12 +69,10 @@
       margin-bottom: 15px;
       border: 2px dashed #60a5fa;
     }
-
     .question-emoji {
       font-size: 3.5rem;
       line-height: 1.2;
     }
-
     .question-kana {
       font-size: 2.5rem;
       font-weight: bold;
@@ -90,18 +80,32 @@
       margin: 5px 0;
       letter-spacing: 2px;
     }
-
     .target-hint {
       font-size: 1.1rem;
       color: #64748b;
     }
-
+    /* 音声再生ボタン */
+    .btn-speech {
+      background-color: #f59e0b;
+      color: white;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background-color 0.2s;
+    }
+    .btn-speech:hover {
+      background-color: #d97706;
+    }
     /* 入力エリア */
     .input-display {
       font-size: 2.3rem;
       font-weight: bold;
-      letter-spacing: 4px;
-      min-height: 55px;
+      letter-spacing: 4px;      min-height: 55px;
       line-height: 55px;
       background-color: #f8fafc;
       border: 3px solid #cbd5e1;
@@ -109,14 +113,12 @@
       margin-bottom: 15px;
       color: #0f172a;
     }
-
     .input-display.correct {
       border-color: #22c55e;
       background-color: #f0fdf4;
       color: #15803d;
       animation: bounce 0.4s ease;
     }
-
     /* トグルボタン（大文字／小文字切り替え） */
     .toggle-container {
       margin-bottom: 12px;
@@ -124,7 +126,6 @@
       justify-content: center;
       gap: 10px;
     }
-
     .btn-toggle {
       background-color: #e2e8f0;
       border: none;
@@ -136,25 +137,21 @@
       color: #475569;
       transition: all 0.2s;
     }
-
     .btn-toggle.active {
       background-color: #3b82f6;
       color: white;
     }
-
     /* 画面キーボード */
     .keyboard {
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
-
     .key-row {
       display: flex;
       justify-content: center;
       gap: 4px;
     }
-
     .key-btn {
       background-color: #3b82f6;
       color: white;
@@ -170,19 +167,16 @@
       user-select: none;
       transition: transform 0.1s, background-color 0.2s;
     }
-
     .key-btn:active {
       transform: translateY(2px);
       border-bottom-width: 2px;
     }
-
     /* 次に入力すべきキーのハイライト表示（オレンジ色＆点滅） */
     .key-btn.target-key {
       background-color: #f97316 !important;
       border-bottom-color: #c2410c !important;
       animation: pulse-target 1.2s infinite ease-in-out;
     }
-
     .key-btn.backspace {
       width: 18%;
       max-width: 75px;
@@ -190,7 +184,6 @@
       border-bottom-color: #b91c1c;
       font-size: 0.95rem;
     }
-
     .message {
       font-size: 1.2rem;
       font-weight: bold;
@@ -198,26 +191,21 @@
       margin-top: 10px;
       color: #16a34a;
     }
-
     .back-link {
       margin-top: 15px;
     }
-
     .back-link a {
       color: #475569;
       text-decoration: none;
       font-weight: bold;
     }
-
     .back-link a:hover {
       text-decoration: underline;
     }
-
     @keyframes bounce {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
     }
-
     @keyframes pulse-target {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.1); }
@@ -246,6 +234,7 @@
       <div id="emoji" class="question-emoji">✏️</div>
       <div id="kana" class="question-kana">A</div>
       <div id="hint" class="target-hint">...</div>
+      <button class="btn-speech" onclick="speakCurrentQuestion()">🔊 はつおんのかくにん</button>
     </div>
 
     <div id="display" class="input-display"></div>
@@ -306,6 +295,28 @@
     ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
     ["Z", "X", "C", "V", "B", "N", "M", "DELETE"]
   ];
+
+  // 合成音声読み上げ関数
+  function speak(text, lang = "en-US", rate = 0.9) {
+    if (!('speechSynthesis' in window)) return;
+    
+    // 再生中の音声をキャンセル
+    window.speechSynthesis.cancel();
+
+    const uttr = new SpeechSynthesisUtterance(text);
+    uttr.lang = lang;
+    uttr.rate = rate; // 読み上げ速度（子どもの学習向けに少しゆっくりめ）
+    window.speechSynthesis.speak(uttr);
+  }
+
+  // 現在の問題を発音
+  function speakCurrentQuestion() {
+    const q = questions[currentQIndex];
+    if (q) {
+      // アルファベット単体と単語を発音 (例: "A, Apple")
+      speak(`...${q.char}, ${q.name}`, "en-US");
+    }
+  }
 
   // 初期化
   function init() {
@@ -416,15 +427,20 @@
   function handleSuccess() {
     const displayEl = document.getElementById("display");
     const msgEl = document.getElementById("message");
+    const q = questions[currentQIndex];
 
     displayEl.classList.add("correct");
     msgEl.textContent = "せいかい！ すごいね！ ✨";
+
+    // 正解時の英語発音（例: "Great! A is for Apple" や単語の再発音）
+    speak(`......${q.char}!${q.name}!`, "en-US");
 
     clearedCount++;
     updateProgressUI();
 
     setTimeout(() => {
       if (clearedCount >= questions.length) {
+        speak("Congratulations! You completed all questions!", "en-US");
         document.getElementById("main-content").innerHTML = `
           <div class="card" style="padding: 40px 20px;">
             <div style="font-size: 4rem;">🎉</div>
@@ -437,7 +453,7 @@
         currentQIndex++;
         showQuestion();
       }
-    }, 900);
+    }, 1500); // 音声がしっかり聞こえるよう遷移時間を少しだけ延長(1500ms)
   }
 
   // 物理キーボード入力対応
