@@ -314,7 +314,7 @@
     const q = questions[currentQIndex];
     if (q) {
       // アルファベット単体と単語を発音 (例: "A, Apple")
-      speak(`...${q.char}, ${q.name}`, "en-US");
+      speak(`, ${q.char}, ${q.name}`, "en-US");
     }
   }
 
@@ -322,7 +322,7 @@
   function init() {
     renderKeyboard();
     showQuestion();
-    speak("...");
+    speak(", ");
     document.addEventListener("keydown", handlePhysicalKeyPress);
   }
 
@@ -434,7 +434,7 @@
     msgEl.textContent = "せいかい！ すごいね！ ✨";
 
     // 正解時の英語発音（例: "Great! A is for Apple" や単語の再発音）
-    speak(`......${q.char}!${q.name}!`, "en-US");
+    speak(`, ${q.char}!${q.name}!`, "en-US");
 
     clearedCount++;
     updateProgressUI();
