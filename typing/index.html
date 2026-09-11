@@ -474,6 +474,19 @@
     displayEl.classList.add("correct");
     msgEl.textContent = "せいかい！ すごいね！ ✨";
 
+    const q = questions[currentQIndex];
+    if ('speechSynthesis' in window && q) {
+      // 進行中の読み上げをキャンセルして即座に発音
+      window.speechSynthesis.cancel();
+      
+      const uttr = new SpeechSynthesisUtterance(q.kana);
+      uttr.lang = 'ja-JP'; // 日本語を指定
+      uttr.rate = 1.0;    // 読み上げ速度（必要に応じて0.8などでゆっくりにも設定可）
+      uttr.pitch = 1.2;   // 子供向けに少し高めの声に設定
+      
+      window.speechSynthesis.speak(uttr);
+    }
+
     clearedCount++;
     updateProgressUI();
     renderKeyboard();
