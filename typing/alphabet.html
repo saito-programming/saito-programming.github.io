@@ -89,8 +89,7 @@
       background-color: #f59e0b;
       color: white;
       border: none;
-      padding: 6px 16px;
-      border-radius: 20px;
+      padding: 6px 16px;      border-radius: 20px;
       font-size: 0.95rem;
       font-weight: bold;
       cursor: pointer;
@@ -105,7 +104,8 @@
     .input-display {
       font-size: 2.3rem;
       font-weight: bold;
-      letter-spacing: 4px;      min-height: 55px;
+      letter-spacing: 4px;
+      min-height: 55px;
       line-height: 55px;
       background-color: #f8fafc;
       border: 3px solid #cbd5e1;
@@ -213,7 +213,6 @@
   </style>
 </head>
 <body>
-
 <div class="container">
   <h1>アルファベットれんしゅう</h1>
 
@@ -288,6 +287,7 @@
   let clearedCount = 0;
   let currentInput = "";
   let isUpperCase = true;
+  let isProcessing = false; // 正解演出中などの入力不可フラグ
 
   // QWERTY配列
   const keyLayout = [
@@ -299,13 +299,11 @@
   // 合成音声読み上げ関数
   function speak(text, lang = "en-US", rate = 0.9) {
     if (!('speechSynthesis' in window)) return;
-    
-    // 再生中の音声をキャンセル
     window.speechSynthesis.cancel();
 
     const uttr = new SpeechSynthesisUtterance(text);
     uttr.lang = lang;
-    uttr.rate = rate; // 読み上げ速度（子どもの学習向けに少しゆっくりめ）
+    uttr.rate = rate;
     window.speechSynthesis.speak(uttr);
   }
 
@@ -313,7 +311,6 @@
   function speakCurrentQuestion() {
     const q = questions[currentQIndex];
     if (q) {
-      // アルファベット単体と単語を発音 (例: "A, Apple")
       speak(`, ${q.char}, ${q.name}`, "en-US");
     }
   }
@@ -347,8 +344,6 @@
         } else {
           btn.textContent = isUpperCase ? key : key.toLowerCase();
           btn.className = "key-btn";
-          
-          // 正解のキーにハイライト用のクラスを追加
           if (key === targetCharUpper) {
             btn.classList.add("target-key");
           }
@@ -357,23 +352,25 @@
         }
         rowDiv.appendChild(btn);
       });
+      rowDiv.appendChild(btn => rowDiv.appendChild(btn));
       kbContainer.appendChild(rowDiv);
     });
   }
 
   // 出題処理
   function showQuestion() {
+    isProcessing = false; // 次の問題が表示されたら入力を解放
     const q = questions[currentQIndex];
     const targetChar = isUpperCase ? q.char : q.char.toLowerCase();
-    
+
     document.getElementById("emoji").textContent = q.emoji;
     document.getElementById("kana").textContent = targetChar;
     document.getElementById("hint").textContent = `（${q.name} の ${targetChar}）`;
-        
+
     currentInput = "";
     updateDisplay();
     updateProgressUI();
-    renderKeyboard(); // キーボードのハイライト位置を更新
+    renderKeyboard();
 
     document.getElementById("message").textContent = "";
     document.getElementById("display").classList.remove("correct");
@@ -393,6 +390,7 @@
 
   // 大文字/小文字切替
   function setCase(caseType) {
+    if (isProcessing) return;
     isUpperCase = (caseType === 'upper');
     document.getElementById("btn-upper").classList.toggle("active", isUpperCase);
     document.getElementById("btn-lower").classList.toggle("active", !isUpperCase);
@@ -401,6 +399,8 @@
 
   // 文字入力判定
   function handleInputChar(charUpper) {
+    if (isProcessing) return; // 処理中（正解表示中など）は入力を無視
+
     const q = questions[currentQIndex];
     currentInput = charUpper.toUpperCase();
     updateDisplay();
@@ -412,6 +412,7 @@
 
   // 1文字削除
   function handleBackspace() {
+    if (isProcessing) return;
     currentInput = "";
     updateDisplay();
   }
@@ -426,6 +427,8 @@
 
   // 正解時の挙動
   function handleSuccess() {
+    isProcessing = true; // 正解判定と同時に入力をブロック
+
     const displayEl = document.getElementById("display");
     const msgEl = document.getElementById("message");
     const q = questions[currentQIndex];
@@ -433,7 +436,6 @@
     displayEl.classList.add("correct");
     msgEl.textContent = "せいかい！ すごいね！ ✨";
 
-    // 正解時の英語発音（例: "Great! A is for Apple" や単語の再発音）
     speak(`, ${q.char}!${q.name}!`, "en-US");
 
     clearedCount++;
@@ -454,11 +456,14 @@
         currentQIndex++;
         showQuestion();
       }
-    }, 1500); // 音声がしっかり聞こえるよう遷移時間を少しだけ延長(1500ms)
+    }, 1500);
   }
 
   // 物理キーボード入力対応
   function handlePhysicalKeyPress(e) {
+    if (e.repeat) return; // キーの押しっぱなし（リピート入力）を防止
+    if (isProcessing) return; // 正解処理中は入力を受け付けない
+
     if (/^[a-zA-Z]$/.test(e.key)) {
       handleInputChar(e.key.toUpperCase());
     } else if (e.key === "Backspace") {
