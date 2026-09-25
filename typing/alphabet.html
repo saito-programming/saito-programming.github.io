@@ -288,6 +288,7 @@
   let clearedCount = 0;
   let currentInput = "";
   let isUpperCase = true;
+  let isProcessing = false; // 正解演出中などの入力不可フラグ
 
   // QWERTY配列
   const keyLayout = [
@@ -363,6 +364,7 @@
 
   // 出題処理
   function showQuestion() {
+    isProcessing = false; // 次の問題が表示されたら入力を解放
     const q = questions[currentQIndex];
     const targetChar = isUpperCase ? q.char : q.char.toLowerCase();
     
@@ -393,6 +395,7 @@
 
   // 大文字/小文字切替
   function setCase(caseType) {
+    if (isProcessing) return;
     isUpperCase = (caseType === 'upper');
     document.getElementById("btn-upper").classList.toggle("active", isUpperCase);
     document.getElementById("btn-lower").classList.toggle("active", !isUpperCase);
@@ -401,6 +404,7 @@
 
   // 文字入力判定
   function handleInputChar(charUpper) {
+    if (isProcessing) return;
     const q = questions[currentQIndex];
     currentInput = charUpper.toUpperCase();
     updateDisplay();
@@ -412,6 +416,7 @@
 
   // 1文字削除
   function handleBackspace() {
+    if (isProcessing) return;
     currentInput = "";
     updateDisplay();
   }
@@ -426,6 +431,7 @@
 
   // 正解時の挙動
   function handleSuccess() {
+    isProcessing = true; // 正解判定と同時に入力をブロック
     const displayEl = document.getElementById("display");
     const msgEl = document.getElementById("message");
     const q = questions[currentQIndex];
@@ -459,6 +465,8 @@
 
   // 物理キーボード入力対応
   function handlePhysicalKeyPress(e) {
+    if (e.repeat) return; // キーの押しっぱなし（リピート入力）を防止
+    if (isProcessing) return; // 正解処理中は入力を受け付けない
     if (/^[a-zA-Z]$/.test(e.key)) {
       handleInputChar(e.key.toUpperCase());
     } else if (e.key === "Backspace") {
