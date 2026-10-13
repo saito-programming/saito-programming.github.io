@@ -489,7 +489,7 @@
     renderKeyboard();
 
     setTimeout(() => {
-      if (clearedCount >= total) {
+      if (clearedCount >= 30) {
         speak("Congratulations! You completed all questions!", "en-US");
         document.getElementById("main-content").innerHTML = `
           <div class="card" style="padding: 40px 20px;">
