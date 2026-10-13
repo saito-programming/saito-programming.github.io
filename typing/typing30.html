@@ -412,7 +412,8 @@
 
   // 進捗状況バーの更新
   function updateProgressUI() {
-    const total = questions.length;
+    //const total = questions.length;
+    const total = 30;
     const remaining = total - clearedCount;
     const percentage = total > 0 ? (clearedCount / total) * 100 : 0;
 
