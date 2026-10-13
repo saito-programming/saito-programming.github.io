@@ -269,6 +269,7 @@
 </div>
 
 <script>
+  const total = 30;
   let questions = [];
   let currentQIndex = 0;
   let clearedCount = 0;
@@ -413,7 +414,6 @@
   // 進捗状況バーの更新
   function updateProgressUI() {
     //const total = questions.length;
-    const total = 30;
     const remaining = total - clearedCount;
     const percentage = total > 0 ? (clearedCount / total) * 100 : 0;
 
@@ -489,7 +489,7 @@
     renderKeyboard();
 
     setTimeout(() => {
-      if (clearedCount >= 30) {
+      if (clearedCount >= total) {
         speak("Congratulations! You completed all questions!", "en-US");
         document.getElementById("main-content").innerHTML = `
           <div class="card" style="padding: 40px 20px;">
