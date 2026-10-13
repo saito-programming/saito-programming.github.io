@@ -307,6 +307,19 @@
     }
   }
 
+  // 合成音声読み上げ関数
+  function speak(text, lang = "en-US", rate = 0.9) {
+    if (!('speechSynthesis' in window)) return;
+    
+    // 再生中の音声をキャンセル
+    window.speechSynthesis.cancel();
+
+    const uttr = new SpeechSynthesisUtterance(text);
+    uttr.lang = lang;
+    uttr.rate = rate; // 読み上げ速度（子どもの学習向けに少しゆっくりめ）
+    window.speechSynthesis.speak(uttr);
+  }
+
   // 配列をランダムに並び替える（ダステンフェルドの手法）
   function shuffleArray(array) {
     const arr = [...array];
@@ -476,12 +489,7 @@
 
     const q = questions[currentQIndex];
     if ('speechSynthesis' in window && q) {
-      window.speechSynthesis.cancel();
-      const uttr = new SpeechSynthesisUtterance(q.kana);
-      uttr.lang = 'ja-JP';
-      uttr.rate = 1.0;
-      uttr.pitch = 1.2;
-      window.speechSynthesis.speak(uttr);
+      speak(q.kana);
     }
 
     clearedCount++;
@@ -490,7 +498,7 @@
 
     setTimeout(() => {
       if (clearedCount >= total) {
-        window.speechSynthesis.speak("Congratulations! You completed all questions!", "en-US");
+        speak("Congratulations! You completed all questions!", "en-US");
         document.getElementById("main-content").innerHTML = `
           <div class="card" style="padding: 40px 20px;">
             <div style="font-size: 4rem;">🎉</div>
