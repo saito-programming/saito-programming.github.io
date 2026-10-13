@@ -467,8 +467,7 @@
     }
   }
 
-  // 正解時の挙動
-  function handleSuccess() {
+ function handleSuccess() {
     const displayEl = document.getElementById("display");
     const msgEl = document.getElementById("message");
 
@@ -477,14 +476,11 @@
 
     const q = questions[currentQIndex];
     if ('speechSynthesis' in window && q) {
-      // 進行中の読み上げをキャンセルして即座に発音
       window.speechSynthesis.cancel();
-      
       const uttr = new SpeechSynthesisUtterance(q.kana);
-      uttr.lang = 'ja-JP'; // 日本語を指定
-      uttr.rate = 1.0;    // 読み上げ速度（必要に応じて0.8などでゆっくりにも設定可）
-      uttr.pitch = 1.2;   // 子供向けに少し高めの声に設定
-      
+      uttr.lang = 'ja-JP';
+      uttr.rate = 1.0;
+      uttr.pitch = 1.2;
       window.speechSynthesis.speak(uttr);
     }
 
@@ -493,9 +489,21 @@
     renderKeyboard();
 
     setTimeout(() => {
-      currentQIndex = (currentQIndex + 1) % questions.length;
-      showQuestion();
-    }, 30);
+      if (clearedCount >= total) {
+        speak("Congratulations! You completed all questions!", "en-US");
+        document.getElementById("main-content").innerHTML = `
+          <div class="card" style="padding: 40px 20px;">
+            <div style="font-size: 4rem;">🎉</div>
+            <h2 style="color: #1e3a8a; margin: 15px 0;">ぜんぶ クリア！</h2>
+            <p style="color: #475569; font-weight: bold; font-size: 1.2rem;">AからZまでバッチリおぼえたね！</p>
+            <button onclick="location.reload()" class="btn-toggle active" style="margin-top: 20px; font-size: 1.1rem; padding: 10px 20px;">もういちど れんしゅうする</button>
+          </div>
+        `;
+      } else {
+        currentQIndex = (currentQIndex + 1) % questions.length;
+        showQuestion();
+      }
+    }, 1500); // ※正解の表示や音声がしっかり伝わるよう、ここも1000ミリ秒（1秒）程度にしておくのがおすすめです
   }
 
   // 物理キーボード入力対応（アルファベットおよび「-」キーに対応）
