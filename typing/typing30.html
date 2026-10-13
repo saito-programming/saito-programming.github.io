@@ -489,7 +489,7 @@
 
     const q = questions[currentQIndex];
     if ('speechSynthesis' in window && q) {
-      speak(q.kana);
+      speak(q.kana, "ja-JP");
     }
 
     clearedCount++;
