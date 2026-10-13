@@ -490,7 +490,7 @@
 
     setTimeout(() => {
       if (clearedCount >= total) {
-        speak("Congratulations! You completed all questions!", "en-US");
+        window.speechSynthesis.speak("Congratulations! You completed all questions!", "en-US");
         document.getElementById("main-content").innerHTML = `
           <div class="card" style="padding: 40px 20px;">
             <div style="font-size: 4rem;">🎉</div>
