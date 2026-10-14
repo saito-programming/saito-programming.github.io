@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -338,6 +337,19 @@
     ["Z", "X", "C", "V", "B", "N", "M", "DELETE"]
   ];
 
+  // 合成音声読み上げ関数
+  function speak(text, lang = "en-US", rate = 0.9) {
+    if (!('speechSynthesis' in window)) return;
+    
+    // 再生中の音声をキャンセル
+    window.speechSynthesis.cancel();
+
+    const uttr = new SpeechSynthesisUtterance(text);
+    uttr.lang = lang;
+    uttr.rate = rate; // 読み上げ速度（子どもの学習向けに少しゆっくりめ）
+    window.speechSynthesis.speak(uttr);
+  }
+
   // 初期化
   function init() {
     renderKeyboard();
@@ -491,15 +503,7 @@
 
     const q = questions[currentQIndex];
     if ('speechSynthesis' in window && q) {
-      // 進行中の読み上げをキャンセルして即座に発音
-      window.speechSynthesis.cancel();
-      
-      const uttr = new SpeechSynthesisUtterance(q.kana);
-      uttr.lang = 'ja-JP'; // 日本語を指定
-      uttr.rate = 1.0;    // 読み上げ速度（必要に応じて0.8などでゆっくりにも設定可）
-      uttr.pitch = 1.2;   // 子供向けに少し高めの声に設定
-      
-      window.speechSynthesis.speak(uttr);
+      speak(q.kana, "ja-JP");
     }
 
     clearedCount++;
@@ -507,6 +511,7 @@
 
     setTimeout(() => {
       if (clearedCount >= questions.length) {
+        speak("Congratulations! You completed all questions!", "en-US");
         document.getElementById("main-content").innerHTML = `
           <div class="card" style="padding: 40px 20px;">
             <div style="font-size: 4rem;">🎉</div>
